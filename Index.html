@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chitas for Kids - Читас для детей</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .header { background: linear-gradient(135deg, #FFA500, #FF6B6B); padding: 30px; border-radius: 20px; text-align: center; color: white; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+        .header h1 { font-size: 2.5em; margin-bottom: 10px; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        .score-board { background: white; padding: 25px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .score-item { text-align: center; padding: 15px; background: #E3F2FD; border-radius: 10px; }
+        .score-label { font-size: 0.9em; color: #666; margin-bottom: 5px; }
+        .score-value { font-size: 2em; font-weight: bold; color: #4A90E2; }
+        .progress-bar { background: #E0E0E0; height: 25px; border-radius: 12px; overflow: hidden; }
+        .progress-fill { background: linear-gradient(90deg, #4CAF50, #8BC34A); height: 100%; width: 0; transition: width 0.5s; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+        .final-result { background: linear-gradient(135deg, #FFD700, #FFA500); padding: 30px; border-radius: 15px; text-align: center; margin-top: 20px; display: none; }
+        .final-result.show { display: block; }
+        .final-result h2 { color: white; font-size: 2.5em; margin-bottom: 10px; }
+        .final-score { font-size: 4em; color: white; font-weight: bold; margin: 20px 0; }
+        .section { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 20px rgba(0,0,0,0.2); position: relative; transition: all 0.3s; }
+        .section:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.3); }
+        .section.completed::after { content: '✓'; position: absolute; top: 20px; right: 20px; width: 50px; height: 50px; background: #4CAF50; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2em; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+        .section-title { font-size: 1.8em; color: #333; }
+        .section-badge { background: linear-gradient(135deg, #FFD700, #FFA500); color: white; padding: 8px 18px; border-radius: 20px; font-weight: bold; }
+        .section-content { display: none; margin-top: 20px; }
+        .section.active .section-content { display: block; }
+        .story-text { line-height: 1.8; color: #555; margin-bottom: 20px; background: #F5F5F5; padding: 20px; border-radius: 10px; }
+        .story-text p { margin-bottom: 15px; }
+        .story-text strong { color: #FF6B6B; }
+        .story-highlight { background: #FFF9C4; padding: 2px 6px; border-radius: 3px; }
+        .game-container { background: #E3F2FD; padding: 25px; border-radius: 15px; margin-top: 25px; }
+        .game-container h3 { color: #1976D2; margin-bottom: 20px; font-size: 1.5em; }
+        .quiz-question { font-size: 1.2em; font-weight: bold; margin-bottom: 20px; color: #333; padding: 15px; background: white; border-radius: 10px; }
+        .quiz-option { background: white; padding: 18px; border-radius: 12px; margin-bottom: 12px; cursor: pointer; border: 3px solid transparent; transition: all 0.3s; font-size: 1.1em; }
+        .quiz-option:hover { background: #FFF9C4; transform: translateX(5px); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .quiz-option.correct { background: #C8E6C9; border-color: #4CAF50; }
+        .quiz-option.wrong { background: #FFCDD2; border-color: #F44336; }
+        .match-game { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .match-column h4 { color: #1976D2; margin-bottom: 15px; text-align: center; padding: 10px; background: white; border-radius: 8px; }
+        .match-item { background: white; padding: 18px; border-radius: 12px; cursor: pointer; border: 3px solid transparent; text-align: center; margin-bottom: 12px; transition: all 0.3s; font-weight: 500; }
+        .match-item:hover { background: #E1F5FE; transform: scale(1.02); }
+        .match-item.selected { border-color: #2196F3; background: #BBDEFB; }
+        .match-item.matched { background: #C8E6C9; border-color: #4CAF50; opacity: 0.7; cursor: default; }
+        .memory-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+        .memory-card { aspect-ratio: 1; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 2.5em; transition: all 0.3s; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .memory-card:hover { transform: scale(1.05); }
+        .memory-card.flipped { background: white; color: #333; }
+        .memory-card.matched { opacity: 0.5; cursor: default; }
+        .btn { background: #4CAF50; color: white; padding: 14px 35px; border: none; border-radius: 25px; cursor: pointer; font-size: 1.15em; font-weight: bold; transition: all 0.3s; margin-top: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .btn:hover { transform: translateY(-3px); background: #45a049; box-shadow: 0 6px 16px rgba(0,0,0,0.3); }
+        .feedback { padding: 18px; border-radius: 12px; margin-top: 20px; font-weight: bold; text-align: center; font-size: 1.1em; }
+        .feedback.success { background: #C8E6C9; color: #2E7D32; }
+        .feedback.error { background: #FFCDD2; color: #C62828; }
+        .fun-fact { background: linear-gradient(135deg, #E1BEE7, #CE93D8); padding: 15px; border-radius: 10px; margin: 15px 0; color: #4A148C; font-weight: bold; }
+        @media (max-width: 768px) { 
+            .score-grid { grid-template-columns: 1fr; } 
+            .match-game { grid-template-columns: 1fr; } 
+            .memory-grid { grid-template-columns: repeat(3, 1fr); }
+            .header h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📖 Chitas for Kids - Читас для детей</h1>
+            <p>Недельная глава Ваехи • 8 Тевета 5786</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">За безопасность евреев в Эрец Исраэль 🇮🇱</p>
+        </div>
+
+        <div class="score-board">
+            <div class="score-grid">
+                <div class="score-item">
+                    <div class="score-label">🏆 Баллы</div>
+                    <div class="score-value" id="score">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">⭐ Звезды</div>
+                    <div class="score-value" id="stars">0</div>
+                </div>
+                <div class="score-item">
+                    <div class="score-label">✅ Выполнено</div>
+                    <div class="score-value" id="done">0/6</div>
+                </div>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress">0%</div>
+            </div>
+            <div class="final-result" id="final">
+                <h2>🎉 ПОЗДРАВЛЯЕМ! 🎉</h2>
+                <div class="final-score" id="finalScore">0</div>
+                <p style="color: white; font-size: 1.3em;">Вы изучили весь Читас на сегодня!</p>
+                <p style="font-size: 3em; margin-top: 20px;">⭐⭐⭐⭐⭐</p>
+                <button class="btn" onclick="location.reload()">Начать заново</button>
+            </div>
+        </div>
+
+        <div class="section" id="s1">
+            <div class="section-header" onclick="toggleSection(1)">
+                <div class="section-title">📜 ХУМАШ - Недельная глава</div>
+                <div class="section-badge">50 баллов</div>
+            </div>
+            <div class="section-content">
+                <div class="story-text">
+                    <p><strong>🎯 История Яакова Авину:</strong></p>
+                    <p>Яаков Авину прожил в Египте <span class="story-highlight">17 лет</span>. Знаешь что? Эти 17 лет были <span class="story-highlight">самыми лучшими годами его жизни!</span></p>
+                    <p>Почему? Потому что Йехуда открыл ешиву (школу изучения Торы) еще до того, как семья приехала! Когда еврей может учить Тору и быть близким к Всевышнему, даже в таком месте как Египет жизнь становится прекрасной! 📚✨</p>
+                    <p><strong>Важная просьба:</strong> Яакову было 147 лет, и он понял, что скоро покинет этот мир. Он попросил Йосефа пообещать (сделать <em>шевуа</em>), что не похоронит его в Египте.</p>
+                    <p><strong>Три причины:</strong></p>
+                    <p>1️⃣ Он не хотел быть в месте, где будет одна из египетских казней (вши)<br>
+                    2️⃣ Хотел быть в Земле Израиля, когда придет Мошиах и произойдет воскрешение мертвых<br>
+                    3️⃣ Не хотел, чтобы египтяне использовали его могилу для идолопоклонства</p>
+                </div>
+                <div class="fun-fact">💡 Интересный факт: Делать добро человеку после его ухода называется "Хесед шель Эмет" - истинная доброта, потому что он уже не сможет отплатить!</div>
+                <div class="game-container">
+                    <h3>🎮 Викторина по Хумашу</h3>
+                    <div class="quiz-question">Сколько лет Яаков Авину прожил в Египте?</div>
+                    <div id="q1"></div>
+                    <div id="f1"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="s2">
+            <div class="section-header" onclick="toggleSection(2)">
+                <div class="section-title">🎵 ТЕГИЛИМ - Псалмы</div>
+                <div class="section-badge">50 баллов</div>
+            </div>
+            <div class="section-content">
+                <div class="story-text">
+                    <p><strong>🙏 Главы 44-48 - Молитва из изгнания:</strong></p>
+                    <p>В главе 44 мы читаем слова еврея, который плачет из-за горького изгнания (Голус). Он просит Всевышнего вывести нас из Голуса ради Его святого Имени, которое с нами в изгнании.</p>
+                    <p><strong>Красивое сравнение царя Давида:</strong> Голус подобен <span class="story-highlight">спящему человеку</span>, потому что жизненная сила Всевышнего в мире не видна так ясно, как будто она спит.</p>
+                    <p>Мы молимся: <strong>"Ура, Ломо Тишан Ашем?"</strong> - "Пробудись! Почему Ты спишь, Г-сподь?"</p>
+                    <p>Мы просим Всевышнего "проснуться" - то есть закончить это изгнание, подобное сну, и тогда мы сможем увидеть Его жизненную силу во всей ее славе в этом мире! 🌟</p>
+                </div>
+                <div class="fun-fact">💪 Знаешь как мы можем приблизить это? Через самопожертвование (месирас нефеш) евреев в соблюдении Торы и заповедей во время изгнания!</div>
+                <div class="game-container">
+                    <h3>🎯 Найди пары - иврит и перевод</h3>
+                    <div class="match-game">
+                        <div class="match-column">
+                            <h4>Слова на иврите</h4>
+                            <div id="left"></div>
+                        </div>
+                        <div class="match-column">
+                            <h4>Русский перевод</h4>
+                            <div id="right"></div>
+                        </div>
+                    </div>
+                    <div id="f2"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="s3">
+            <div class="section-header" onclick="toggleSection(3)">
+                <div class="section-title">💎 ТАНИЯ - Учение хасидизма</div>
+                <div class="section-badge">60 баллов</div>
+            </div>
+            <div class="section-content">
+                <div class="story-text">
+                    <p><strong>📖 Глава 8 - О чем нужно быть осторожным:</strong></p>
+                    <p>Мы уже узнали, что наше тело и дурное начало (Йецер ара) хотят делать плохие вещи <em>действием</em>. Теперь узнаем, что они хотят делать в <span class="story-highlight">мыслях и словах</span>!</p>
+                    <p><strong>Четыре вещи, которых нужно избегать:</strong></p>
+                    <p><strong>1️⃣ Дварим бетелим</strong> (пустые разговоры) - Говорить просто так, без пользы. Это может сделать нашу душу нечистой! Душе потом понадобится очищение через Каф акела.</p>
+                    <p><strong>2️⃣ Дибурим асурим</strong> (запрещенные слова) - Говорить плохое о других людях (лашон ара). Это так серьезно, что душе понадобится очищение в Геиноме!</p>
+                    <p><strong>3️⃣ Битуль Тора</strong> (трата времени от учебы) - Тратить время, когда мы должны учить Тору.</p>
+                    <p><strong>4️⃣ Хохмот а-умот</strong> (нееврейские науки без цели) - Учить вещи, которые не из Торы, просто так. Это тянет не только чувства, но даже наш разум в нечистоту!</p>
+                </div>
+                <div class="fun-fact">✨ Важно: Можно учить светские науки только для заработка или чтобы лучше понять Тору! Великие праведники, как Рамбам и Рамбан, учили другие науки, потому что знали, как использовать их для Торы!</div>
+                <div class="game-container">
+                    <h3>🎮 Викторина по Тании</h3>
+                    <div class="quiz-question">Что происходит с душой, если человек говорит лашон ара (злословие)?</div>
+                    <div id="q3"></div>
+                    <div id="f3"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="s4">
+            <div class="section-header" onclick="toggleSection(4)">
+                <div class="section-title">📅 АЙОМ ЙОМ - На каждый день</div>
+                <div class="section-badge">40 баллов</div>
+            </div>
+            <div class="section-content">
+                <div class="story-text">
+                    <p><strong>🎓 8 Тевета - Понимание молитвы:</strong></p>
+                    <p>Знаешь ли ты, что ты говоришь, когда молишься? 🤔</p>
+                    <p><strong>Удивительная история:</strong> Цемах Цедек (третий Любавичский Ребе) очень хотел, чтобы его внуки понимали слова молитвы. Поэтому он попросил учителей (меламдим) включить объяснение слов молитвы (<em>Пируш амилот</em>) в программу обучения!</p>
+                    <p>Каждый месяц внуки приходили к дедушке, Цемах Цедеку, чтобы он проверил, как они понимают значение молитв, которым их учили! 📚✡️</p>
+                    <p><strong>Для нас сегодня:</strong> Теперь у нас есть специальный сидур Вайса от организации "Цивот Ашем" с понятными объяснениями для детей! Это помогает нам следовать указанию Цемах Цедека - понимать значение слов, которые мы произносим в молитве.</p>
+                </div>
+                <div class="fun-fact">💝 Совет: Каждый день старайся понять хотя бы одно новое слово из молитвы!</div>
+                <div class="game-container">
+                    <h3>🎲 Игра на память - найди пары</h3>
+                    <p style="margin-bottom: 15px; color: #666;">Нажимай на карточки, чтобы найти одинаковые пары!</p>
+                    <div class="memory-grid" id="mem"></div>
+                    <div id="f4"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="s5">
+            <div class="section-header" onclick="toggleSection(5)">
+                <div class="section-title">⚖️ РАМБАМ - Еврейский закон</div>
+                <div class="section-badge">50 баллов</div>
+            </div>
+            <div class="section-content">
+                <div class="story-text">
+                    <p><strong>📜 Законы о займах - Главы 25-27:</strong></p>
+                    <p><strong>Глава 25 - О поручителях (гарантах):</strong></p>
+                    <p>Поручитель - это человек, который обещает вернуть деньги, если заемщик не сможет вернуть их вовремя.</p>
+                    <p><strong>Важное правило:</strong></p>
+                    <p>🔹 Если человек говорит, что будет поручителем <span class="story-highlight">ДО того, как дали займ</span> - он становится настоящим поручителем без дополнительных действий!</p>
+                    <p>🔹 Если человек говорит, что будет поручителем <span class="story-highlight">ПОСЛЕ того, как займ уже дан</span> (например, слышит крики кредитора и говорит "я буду поручителем!") - он НЕ становится настоящим поручителем! Ему нужно сделать специальное действие - киньян.</p>
+                    <p><strong>Глава 27 - О долговых расписках:</strong></p>
+                    <p>Нужно быть очень осторожным при написании расписки (штар), чтобы никто не мог изменить написанное!</p>
+                    <p>Например: нельзя писать слово "шалош" (три) в конце строки, потому что кто-то может добавить буквы и сделать "шлошим" (тридцать)! 😮</p>
+                </div>
+                <div class="fun-fact">🎓 Эти законы изучают в Талмуде, в трактате Бава Мециа!</div>
+                <div class="game-container">
+                    <h3>❓ Вопрос по Рамбаму</h3>
+                    <div class="quiz-question">Когда человек становится поручителем без киньяна (специального действия)?</div>
+                    <div id="q5"></div>
+                    <div id="f5"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section" id="s6">
+            <div class="section-header" onclick="toggleSection(6)">
+                <div class="section-title">🌟 ГЕУЛА - Избавление и Мошиах</div>
+                <div class="section-badge">50 баллов</div>
+            </div>
+            <div class="section-content">
+                <div class="story-text">
+                    <p><strong>🌈 Надежда на Мошиаха:</strong></p>
+                    <p>Хида (великий мудрец) приводит слова из Мидраша "Ялкут Шимони" о надежде на Мошиаха:</p>
+                    <p><span class="story-highlight" style="font-size: 1.2em;">В заслугу нашей надежды мы удостоимся прихода Мошиаха!</span> 🎉</p>
+                    <p><strong>В молитве Шмоне Эсре:</strong></p>
+                    <p>В благословении "Эт Цемах" мы просим Всевышнего привести Мошиаха и говорим: <em>"Ки лишуатха кивину коль айом"</em> - "Потому что мы надеемся на Твое спасение весь день".</p>
+                    <p><strong>Глубокий смысл:</strong></p>
+                    <p>Мы не просто говорим Всевышнему, что очень хотим Мошиаха! Мы просим: даже если мы не заслуживаем Мошиаха по другим причинам, пусть будет засчитано, что мы заслуживаем Мошиаха потому, что <span class="story-highlight">мы надеемся на Твое спасение весь день!</span></p>
+                    <p>Каждый день, когда мы думаем о Мошиахе и ждем его, мы приближаем его приход! 💫</p>
+                </div>
+                <div class="fun-fact">🔥 Попробуй сегодня: Когда будешь молиться "Эт Цемах", подумай о том, как сильно ты ждешь Мошиаха!</div>
+                <div class="game-container">
+                    <h3>✨ Финальный вопрос о Геуле</h3>
+                    <div class="quiz-question">Что помогает нам заслужить приход Мошиаха?</div>
+                    <div id="q6"></div>
+                    <div id="f6"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var state = {score: 0, stars: 0, done: 0, completed: {}};
+
+        function toggleSection(n) {
+            document.getElementById('s' + n).classList.toggle('active');
+        }
+
+        function update() {
+            document.getElementById('score').textContent = state.score;
+            document.getElementById('stars').textContent = state.stars;
+            document.getElementById('done').textContent = state.done + '/6';
+            var progress = (state.done / 6) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+            document.getElementById('progress').textContent = Math.round(progress) + '%';
+            
+            if (state.done === 6) {
+                document.getElementById('final').classList.add('show');
+                document.getElementById('finalScore').textContent = state.score + ' баллов!';
+            }
+        }
+
+        function addScore(points, section) {
+            if (!state.completed[section]) {
+                state.score += points;
+                state.stars += Math.floor(points / 10);
+                state.done++;
+                state.completed[section] = true;
+                document.getElementById('s' + section).classList.add('completed');
+                update();
+            }
+        }
+
+        var q1Data = [
+            {text: '10 лет', correct: false},
+            {text: '17 лет', correct: true},
+            {text: '20 лет', correct: false},
+            {text: '25 лет', correct: false}
+        ];
+        
+        var q1Container = document.getElementById('q1');
+        q1Data.forEach(function(option) {
+            var div = document.createElement('div');
+            div.className = 'quiz-option';
+            div.textContent = option.text;
+            div.onclick = function() {
+                if (div.classList.contains('correct') || div.classList.contains('wrong')) return;
+                q1Container.querySelectorAll('.quiz-option').forEach(function(el) { el.style.pointerEvents = 'none'; });
+                if (option.correct) {
+                    div.classList.add('correct');
+                    document.getElementById('f1').innerHTML = '<div class="feedback success">🎉 Правильно! Яаков прожил в Египте 17 лучших лет своей жизни! +50 баллов!</div>';
+                    addScore(50, 1);
+                } else {
+                    div.classList.add('wrong');
+                    q1Container.querySelectorAll('.quiz-option').forEach(function(el) {
+                        if (q1Data.find(function(o) { return o.text === el.textContent && o.correct; })) el.classList.add('correct');
+                    });
+                    document.getElementById('f1').innerHTML = '<div class="feedback error">❌ Неправильно! Правильный ответ: 17 лет</div>';
+                }
+            };
+            q1Container.appendChild(div);
+        });
+
+        var pairs = {'Голус': 'Изгнание', 'Ура': 'Пробудись', 'Шевуа': 'Обещание', 'Месирас нефеш': 'Самопожертвование'};
+        var keys = Object.keys(pairs);
+        var values = Object.values(pairs).sort(function() { return Math.random() - 0.5; });
+        var selected1 = null, selected2 = null, matchedCount = 0;
+
+        keys.forEach(function(key) {
+            var div = document.createElement('div');
+            div.className = 'match-item';
+            div.textContent = key;
+            div.dataset.key = key;
+            div.onclick = function() {
+                if (div.classList.contains('matched')) return;
+                if (selected1) selected1.classList.remove('selected');
+                selected1 = div;
+                div.classList.add('selected');
+                if (selected2) checkMatch();
+            };
+            document.getElementById('left').appendChild(div);
+        });
+
+        values.forEach(function(value) {
+            var div = document.createElement('div');
+            div.className = 'match-item';
+            div.textContent = value;
+            div.dataset.value = value;
+            div.onclick = function() {
+                if (div.classList.contains('matched')) return;
+                if (selected2) selected2.classList.remove('selected');
+                selected2 = div;
+                div.classList.add('selected');
+                if (selected1) checkMatch();
+            };
+            document.getElementById('right').appendChild(div);
+        });
+
+        function checkMatch() {
+            if (pairs[selected1.dataset.key] === selected2.dataset.value) {
+                selected1.classList.add('matched');
+                selected2.classList.add('matched');
+                matchedCount++;
+                if (matchedCount === keys.length) {
+                    document.getElementById('f2').innerHTML = '<div class="feedback success">🎊 Отлично! Все пары найдены! +50 баллов!</div>';
+                    addScore(50, 2);
+                }
+            } else {
+                document.getElementById('f2').innerHTML = '<div class="feedback error">❌ Эти слова не подходят друг другу! Попробуй еще раз!</div>';
+                setTimeout(function() {
+                    selected1.classList.remove('selected');
+                    selected2.classList.remove('selected');
+                    document.getElementById('f2').innerHTML = '';
+                }, 1500);
+            }
+            selected1 = null;
+            selected2 = null;
+        }
+
+        var q3Data = [
+            {text: 'Ничего не происходит', correct: false},
+            {text: 'Душе нужно очищение в Геиноме', correct: true},
+            {text: 'Только Каф акела', correct: false},
+            {text: 'Душа сразу попадает в Ган Эден', correct: false}
+        ];
+        
+        var q3Container = document.getElementById('q3');
+        q3Data.forEach(function(option) {
+            var div = document.createElement('div');
+            div.className = 'quiz-option';
+            div.textContent = option.text;
+            div.onclick = function() {
+                if (div.classList.contains('correct') || div.classList.contains('wrong')) return;
+                q3Container.querySelectorAll('.quiz-option').forEach(function(el) { el.style.pointerEvents = 'none'; });
+                if (option.correct) {
+                    div.classList.add('correct');
+                    document.getElementById('f3').innerHTML = '<div class="feedback success">🏆 Правильно! Лашон ара - очень серьезный грех, и душе нужно очищение в Геиноме! +60 баллов!</div>';
+                    addScore(60, 3);
+                } else {
+                    div.classList.add('wrong');
+                    q3Container.querySelectorAll('.quiz-option').forEach(function(el) {
+                        if (q3Data.find(function(o) { return o.text === el.textContent && o.correct; })) el.classList.add('correct');
+                    });
+                    document.getElementById('f3').innerHTML = '<div class="feedback error">❌ Неправильно! Правильный ответ: душе нужно очищение в Геиноме</div>';
+                }
+            };
+            q3Container.appendChild(div);
+        });
+
+        var memoryCards = ['📖', '🕯️', '✡️', '🎵', '💎', '⭐'];
+        var memoryDeck = memoryCards.concat(memoryCards).sort(function() { return Math.random() - 0.5; });
+        var flippedCards = [];
+        var matchedMemory = [];
+
+        memoryDeck.forEach(function(card, index) {
+            var div = document.createElement('div');
+            div.className = 'memory-card';
+            div.textContent = '❓';
+            div.dataset.card = card;
+            div.dataset.index = index;
+            div.onclick = function() {
+                if (flippedCards.length >= 2 || div.classList.contains('flipped') || matchedMemory.indexOf(index) !== -1) return;
+                div.classList.add('flipped');
+                div.textContent = card;
+                flippedCards.push(index);
+                if (flippedCards.length === 2) {
+                    setTimeout(function() {
+                        var idx1 = flippedCards[0];
+                        var idx2 = flippedCards[1];
+                        var card1 = document.querySelector('[data-index="' + idx1 + '"]');
+                        var card2 = document.querySelector('[data-index="' + idx2 + '"]');
+                        if (card1.dataset.card === card2.dataset.card) {
+                            matchedMemory.push(idx1, idx2);
+                            card1.classList.add('matched');
+                            card2.classList.add('matched');
+                            if (matchedMemory.length === memoryDeck.length) {
+                                document.getElementById('f4').innerHTML = '<div class="feedback success">🎯 Превосходно! Все пары найдены! +40 баллов!</div>';
+                                addScore(40, 4);
+                            }
+                        } else {
+                            card1.classList.remove('flipped');
+                            card2.classList.remove('flipped');
+                            card1.textContent = '❓';
+                            card2.textContent = '❓';
+                        }
+                        flippedCards = [];
+                    }, 800);
+                }
+            };
+            document.getElementById('mem').appendChild(div);
+        });
+
+        var q5Data = [
+            {text: 'После того, как займ уже дан', correct: false},
+            {text: 'До того, как дали займ', correct: true},
+            {text: 'Только с письменным договором', correct: false},
+            {text: 'Когда есть свидетели', correct: false}
+        ];
+        
+        var q5Container = document.getElementById('q5');
+        q5Data.forEach(function(option) {
+            var div = document.createElement('div');
+            div.className = 'quiz-option';
+            div.textContent = option.text;
+            div.onclick = function() {
+                if (div.classList.contains('correct') || div.classList.contains('wrong')) return;
+                q5Container.querySelectorAll('.quiz-option').forEach(function(el) { el.style.pointerEvents = 'none'; });
+                if (option.correct) {
+                    div.classList.add('correct');
+                    document.getElementById('f5').innerHTML = '<div class="feedback success">🎉 Правильно! Если обещание дано ДО займа, киньян не нужен! +50 баллов!</div>';
+                    addScore(50, 5);
+                } else {
+                    div.classList.add('wrong');
+                    q5Container.querySelectorAll('.quiz-option').forEach(function(el) {
+                        if (q5Data.find(function(o) { return o.text === el.textContent && o.correct; })) el.classList.add('correct');
+                    });
+                    document.getElementById('f5').innerHTML = '<div class="feedback error">❌ Неправильно! Правильный ответ: до того, как дали займ</div>';
+                }
+            };
+            q5Container.appendChild(div);
+        });
+
+        var q6Data = [
+            {text: 'Только изучение Торы', correct: false},
+            {text: 'Наша постоянная надежда на спасение', correct: true},
+            {text: 'Только жизнь в Израиле', correct: false},
+            {text: 'Только молитва', correct: false}
+        ];
+        
+        var q6Container = document.getElementById('q6');
+        q6Data.forEach(function(option) {
+            var div = document.createElement('div');
+            div.className = 'quiz-option';
+            div.textContent = option.text;
+            div.onclick = function() {
+                if (div.classList.contains('correct') || div.classList.contains('wrong')) return;
+                q6Container.querySelectorAll('.quiz-option').forEach(function(el) { el.style.pointerEvents = 'none'; });
+                if (option.correct) {
+                    div.classList.add('correct');
+                    document.getElementById('f6').innerHTML = '<div class="feedback success">🎉 Совершенно верно! В заслугу нашей надежды мы удостоимся Мошиаха! +50 баллов!</div>';
+                    addScore(50, 6);
+                } else {
+                    div.classList.add('wrong');
+                    q6Container.querySelectorAll('.quiz-option').forEach(function(el) {
+                        if (q6Data.find(function(o) { return o.text === el.textContent && o.correct; })) el.classList.add('correct');
+                    });
+                    document.getElementById('f6').innerHTML = '<div class="feedback error">❌ Неправильно! Правильный ответ: наша постоянная надежда на спасение</div>';
+                }
+            };
+            q6Container.appendChild(div);
+        });
+    </script>
+</body>
+</html>
